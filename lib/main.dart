@@ -29,15 +29,20 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  static const countDownDuration = Duration(minutes: 10);
-  Duration duration = Duration();
+  static const countDownDuration = Duration(minutes: 9);
+  Duration duration = const Duration();
   Timer? timer;
   bool isCountDown = true;
+
+  final hourController = TextEditingController();
+  final minutesController = TextEditingController();
+  final secondsController = TextEditingController();
+
+  double _currentSliderValue = 5;
 
   @override
   void initState() {
     super.initState();
-    //startTimer();
     reset();
   }
 
@@ -45,8 +50,33 @@ class _MyHomePageState extends State<MyHomePage> {
     if (isCountDown) {
       setState(() => duration = countDownDuration);
     } else {
-      setState(() => duration = Duration());
+      setState(() => duration = const Duration());
     }
+  }
+
+  void setTime() {
+    if (hourController.text.isEmpty ||
+        minutesController.text.isEmpty ||
+        secondsController.text.isEmpty) return;
+
+    final enteredHours = int.parse(hourController.text);
+    final enteredMinutes = int.parse(minutesController.text);
+    final enteredSeconds = int.parse(secondsController.text);
+
+    if (enteredHours < 0 || enteredMinutes < 0 || enteredSeconds < 0) return;
+    setState(() => duration = Duration(
+          hours: enteredHours,
+          minutes: enteredMinutes,
+          seconds: enteredSeconds,
+        ));
+  }
+
+  void clearTimer() {
+    setState(() => duration = const Duration(
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        ));
   }
 
   void addTime() {
@@ -65,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void startTimer() {
     if (timer == null ? true : !timer!.isActive) {
-      timer = Timer.periodic(Duration(seconds: 1), (_) => addTime());
+      timer = Timer.periodic(const Duration(seconds: 1), (_) => addTime());
     }
   }
 
@@ -80,11 +110,11 @@ class _MyHomePageState extends State<MyHomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              SizedBox(height: 50),
+              const SizedBox(height: 50),
               Container(
                 padding: const EdgeInsets.all(10),
-                margin:
-                    EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
+                margin: const EdgeInsets.only(
+                    top: 10, bottom: 10, left: 20, right: 20),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(3),
                     color: AppColors().primary),
@@ -108,19 +138,101 @@ class _MyHomePageState extends State<MyHomePage> {
                 ]),
               ),
               Container(
+                padding: const EdgeInsets.all(10),
+                margin: const EdgeInsets.only(
+                    top: 10, bottom: 10, left: 20, right: 20),
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3),
+                    color: Colors.blueGrey),
+                child: Column(children: [
+                  buildTime(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ToggleButton(
+                        backgroundColor: AppColors().start,
+                        text: "Start",
+                        interactTimer: startTimer,
+                      ),
+                      ToggleButton(
+                        backgroundColor: AppColors().stop,
+                        text: "Stop",
+                        interactTimer: stopTimer,
+                      ),
+                    ],
+                  ),
+                ]),
+              ),
+              Container(
                 padding: const EdgeInsets.all(20),
-                margin:
-                    EdgeInsets.only(top: 10, bottom: 10, left: 20, right: 20),
+                margin: const EdgeInsets.only(
+                    top: 10, bottom: 10, left: 20, right: 20),
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(3),
                     color: AppColors().secondary),
-                width: double.infinity,
                 child: Column(
                   children: [
-                    TextField(
-                        decoration: InputDecoration(fillColor: Colors.white)),
-                    TextField(),
-                    TextButton(onPressed: () {}, child: Text("Set Timer"))
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Container(
+                          height: 70,
+                          width: 100,
+                          child: TextField(
+                            decoration:
+                                const InputDecoration(labelText: "Hours"),
+                            keyboardType: TextInputType.number,
+                            controller: hourController,
+                            onSubmitted: (_) => setTime(),
+                          ),
+                        ),
+                        Container(
+                          height: 70,
+                          width: 100,
+                          child: TextField(
+                            decoration:
+                                const InputDecoration(labelText: "Minutes"),
+                            keyboardType: TextInputType.number,
+                            controller: minutesController,
+                            onSubmitted: (_) => setTime(),
+                          ),
+                        ),
+                        Container(
+                          height: 70,
+                          width: 100,
+                          child: TextField(
+                            decoration:
+                                const InputDecoration(labelText: "Seconds"),
+                            keyboardType: TextInputType.number,
+                            controller: secondsController,
+                            onSubmitted: (_) => setTime(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      "Study Amount",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    buildSlider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                            onPressed: () {
+                              setTime();
+                            },
+                            child: const Text("Set Timer")),
+                        TextButton(
+                            onPressed: () {
+                              clearTimer();
+                            },
+                            child: const Text("Reset Timer")),
+                      ],
+                    )
                   ],
                 ),
               )
@@ -136,7 +248,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var seconds = twoDigits(duration.inSeconds.remainder(60));
 
     return Container(
-      margin: EdgeInsets.all(10),
+      margin: const EdgeInsets.all(10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -150,13 +262,24 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Widget buildSlider() => Slider(
+      value: _currentSliderValue,
+      max: 100,
+      divisions: 10,
+      label: "${_currentSliderValue.round().toString()}%",
+      onChanged: (double value) {
+        setState(() {
+          _currentSliderValue = value;
+        });
+      });
+
   Widget buildTimeCard({required String time, required String header}) =>
       Column(
         children: [
           Container(
             decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(3), color: Colors.white),
-            padding: EdgeInsets.all(15),
+            padding: const EdgeInsets.all(15),
             child: Text(
               time,
               style: const TextStyle(
